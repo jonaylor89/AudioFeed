@@ -38,6 +38,8 @@ dependencies:
   googleapis: ^4.0.0
   googleapis_auth: ^1.1.0
   file_picker: ^4.0.0
+  google_sign_in: ^5.1.1
+  extension_google_sign_in_as_googleapis_auth: ^2.0.4
 
 dev_dependencies:
   flutter_test:

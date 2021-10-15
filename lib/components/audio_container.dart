@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:audio_feed/components/seek_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,28 +5,57 @@ import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 
 class AudioContainer extends StatefulWidget {
-  const AudioContainer({Key? key, required this.audioFile}) : super(key: key);
+  const AudioContainer({
+    Key? key,
+    required this.audioTitle,
+    required this.audioId,
+    required this.audioLock,
+  }) : super(key: key);
 
-  final File audioFile;
+  final String audioTitle;
+  final String audioId;
+  final ValueNotifier<String> audioLock;
 
   @override
   _AudioContainerState createState() => _AudioContainerState();
 }
 
-class _AudioContainerState extends State<AudioContainer> {
-  File get _audioFile => widget.audioFile;
+class _AudioContainerState extends State<AudioContainer>
+    with AutomaticKeepAliveClientMixin {
+  String get _audioTitle => widget.audioTitle;
+  String get _audioId => widget.audioId;
+  ValueNotifier<String> get _audioLock => widget.audioLock;
+
+  final String _drivePrefix = "https://drive.google.com/uc?export=view&id=";
   final AudioPlayer _player = AudioPlayer();
+
+  void onAudioLockChange() {
+    if (_audioLock.value != _audioId) {
+      _player.pause();
+    }
+  }
+
+  void initAudio() {
+    _audioLock.addListener(onAudioLockChange);
+    _player.setLoopMode(LoopMode.one);
+  }
+
+  @override
+  void initState() {
+    initAudio();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    _player.setFilePath(_audioFile.path);
+    _player.setUrl(_drivePrefix + _audioId);
     return Column(
       children: [
         const SizedBox(height: 50.0),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Text(
-            _audioFile.path.split('/').last,
+            _audioTitle,
             style: const TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.bold,
@@ -70,6 +97,7 @@ class _AudioContainerState extends State<AudioContainer> {
                           icon: const Icon(Icons.play_arrow),
                           iconSize: 48.0,
                           onPressed: () {
+                            _audioLock.value = _audioId;
                             _player.play();
                           },
                         );
@@ -144,4 +172,7 @@ class _AudioContainerState extends State<AudioContainer> {
       ],
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

@@ -1,71 +1,16 @@
-import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import 'package:audio_feed/components/audio_container.dart';
-import 'package:audio_feed/components/file_picker_button.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-class AudioFeedView extends StatefulWidget {
-  const AudioFeedView({Key? key}) : super(key: key);
+class AudioFeedView extends StatelessWidget {
+  AudioFeedView({Key? key}) : super(key: key);
 
-  @override
-  _AudioFeedViewState createState() => _AudioFeedViewState();
-}
+  ValueNotifier<String> audioLock = ValueNotifier('');
 
-class _AudioFeedViewState extends State<AudioFeedView> {
-  // final String driveId = "1bW1jBGWLCJQPkrtS5Mkal5Dc8mxAnsfB";
-  // final String audioFolderURL =
-  //     "https://drive.google.com/drive/folders/1bW1jBGWLCJQPkrtS5Mkal5Dc8mxAnsfB?usp=sharing";
-
-  // List<File> audioFiles = [];
-  File? _pickedAudio;
-
-  // void fetchAudioFiles() async {
-  //   final httpClient = await clientViaApplicationDefaultCredentials(scopes: [
-  //     DriveApi.driveReadonlyScope,
-  //   ]);
-  //
-  //   try {
-  //     final drive = DriveApi(httpClient);
-  //
-  //     final driveFiles = await drive.files.list(driveId: driveId);
-  //     final List<File> audioFiles = driveFiles.files!;
-  //     print('Received ${audioFiles.length} file names:');
-  //     for (var file in audioFiles) {
-  //       print(file.name);
-  //     }
-  //
-  //     this.audioFiles = audioFiles;
-  //   } finally {
-  //     httpClient.close();
-  //   }
-  // }
-
-  void handleAudioFromFiles() async {
-    try {
-      FilePickerResult? audioFileResult = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['mp3'],
-      );
-      if (audioFileResult != null) {
-        final String path = audioFileResult.files.single.path!;
-
-        File pickedAudio = File(path);
-
-        setState(() {
-          _pickedAudio = pickedAudio;
-        });
-      }
-    } catch (error) {
-      print(error);
-    }
-  }
-
-  @override
-  void initState() {
-    // fetchAudioFiles();
-    super.initState();
-  }
+  final String cloudFunctionUrl =
+      "https://us-central1-audio-feed-328918.cloudfunctions.net/list-drive-files";
 
   @override
   Widget build(BuildContext context) {
@@ -75,18 +20,28 @@ class _AudioFeedViewState extends State<AudioFeedView> {
           child: Text('Audio Feed'),
         ),
       ),
-      floatingActionButton: FilePickerButton(
-        onTap: handleAudioFromFiles,
-      ),
       body: Center(
-        child: Column(
-          children: [
-            _pickedAudio == null
-                ? const SizedBox.shrink()
-                : AudioContainer(
-                    audioFile: _pickedAudio!,
-                  ),
-          ],
+        child: FutureBuilder<http.Response>(
+          future: http.get(Uri.parse(cloudFunctionUrl)),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const CircularProgressIndicator();
+            }
+
+            final response = snapshot.data!;
+            final List<dynamic> loops = jsonDecode(response.body)["files"];
+            return ListView.builder(
+              itemCount: loops.length,
+              itemBuilder: (context, index) {
+                final Map<String, dynamic> loop = loops[index];
+                return AudioContainer(
+                  audioTitle: loop["name"]! as String,
+                  audioId: loop["id"]! as String,
+                  audioLock: audioLock,
+                );
+              },
+            );
+          },
         ),
       ),
     );
