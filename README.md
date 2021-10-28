@@ -1,6 +1,14 @@
-# audio_feed
+# Audio Feed
 
-A new Flutter project.
+The code associated with the blog series "Creating an Audio Feed in Flutter"
+
+## Blog Posts
+
+Part 1:
+[https://blog.intheloopstudio.com/creating-an-audio-feed-in-flutter-part-1](https://blog.intheloopstudio.com/creating-an-audio-feed-in-flutter-part-1)
+
+Part 2:
+[https://blog.intheloopstudio.com/creating-an-audio-feed-in-flutter-part-2](https://blog.intheloopstudio.com/creating-an-audio-feed-in-flutter-part-2)
 
 ## Getting Started
 
